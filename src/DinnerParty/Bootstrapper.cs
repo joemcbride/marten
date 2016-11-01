@@ -7,7 +7,12 @@ using System.Collections.Generic;
 using System.Configuration;
 using DinnerParty.Models;
 using DinnerParty.Models.Marten;
+using DinnerParty.Modules;
+using GraphQL;
+using GraphQL.Http;
+using GraphQL.Types;
 using Marten;
+using Nancy.Session;
 using NLog;
 
 namespace DinnerParty
@@ -22,7 +27,7 @@ namespace DinnerParty
             Cassette.Nancy.CassetteNancyStartup.OptimizeOutput = true;
 #endif
 
-            var docStore = container.Resolve<DocumentStore>("DocStore");
+            var docStore = container.Resolve<IDocumentStore>("DocStore");
 
             CleanUpDB(docStore);
 
@@ -31,6 +36,8 @@ namespace DinnerParty
                 Elmah.ErrorSignal.FromCurrentContext().Raise(exception);
                 return null;
             };
+
+            CookieBasedSessions.Enable(pipelines);
         }
 
         protected override void ConfigureApplicationContainer(TinyIoCContainer container)
@@ -43,10 +50,22 @@ namespace DinnerParty
                 _.Connection(martenConnectionString);
                 _.Schema.Include<UserModelRegistry>();
                 _.Schema.Include<DinnersRegistry>();
+                _.Schema.Include<PerfLogRegistry>();
                 _.Listeners.Add(new LastUpdatedSessionListener());
             });
 
-            container.Register(store, "DocStore");
+            container.Register<IDocumentStore>(store, "DocStore");
+
+            container.Register<IDocumentExecuter>(new DocumentExecuter());
+            container.Register<IDocumentWriter>(new DocumentWriter(true));
+
+            container.Register((c, overloads) =>
+            {
+                var schema = new NerdDinnerSchema(type => c.Resolve(type) as IGraphType);
+                return schema;
+            });
+            container.Register<Query>();
+            container.Register<DinnerType>();
         }
 
         protected override void RequestStartup(TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines, NancyContext context)
@@ -75,7 +94,7 @@ namespace DinnerParty
 
             container.Register<IUserMapper, UserMapper>();
 
-            var docStore = container.Resolve<DocumentStore>("DocStore");
+            var docStore = container.Resolve<IDocumentStore>("DocStore");
             var documentSession = docStore.OpenSession();
 
             container.Register<IDocumentSession>(documentSession);
@@ -91,55 +110,59 @@ namespace DinnerParty
 
         protected override IEnumerable<Type> ViewEngines => new[] { typeof(Nancy.ViewEngines.Razor.RazorViewEngine) };
 
-        private void CleanUpDB(DocumentStore documentStore)
+        private void CleanUpDB(IDocumentStore documentStore)
         {
+            return;
+
             // This can fail the very first time the application runs as it will not yet have created the necessary schema objects,
             //  so we can just quietly move on
             try
             {
-                var docSession = documentStore.OpenSession();
-                var configInfo = docSession.Load<Config>("DinnerParty/Config");
-
-                if(configInfo == null)
+                using (var docSession = documentStore.OpenSession())
                 {
-                    configInfo = new Config();
-                    configInfo.Id = "DinnerParty/Config";
-                    configInfo.LastTruncateDate = DateTime.Now.AddHours(-48);
-                    //No need to delete data if config doesnt exist but setup ready for next time
+                    var configInfo = docSession.Load<Config>("DinnerParty/Config");
 
-                    docSession.Store(configInfo);
-                    docSession.SaveChanges();
+                    if (configInfo == null)
+                    {
+                        configInfo = new Config();
+                        configInfo.Id = "DinnerParty/Config";
+                        configInfo.LastTruncateDate = DateTime.Now.AddHours(-48);
+                        //No need to delete data if config doesnt exist but setup ready for next time
 
-                    return;
-                }
+                        docSession.Store(configInfo);
+                        docSession.SaveChanges();
+
+                        return;
+                    }
 
 
-                if((DateTime.Now - configInfo.LastTruncateDate).TotalHours < 24)
-                    return;
+                    if ((DateTime.Now - configInfo.LastTruncateDate).TotalHours < 24)
+                        return;
 
-                long docCount = 0, dbSize = 0;
+                    long docCount = 0, dbSize = 0;
 
-                using(var cmd = docSession.Connection.CreateCommand())
-                {
-                    var dinnerTableName = documentStore.Schema.MappingFor(typeof(Dinner)).Table.QualifiedName;
-                    cmd.CommandText = $"SELECT COUNT(*) FROM {dinnerTableName}";
-                    docCount = (long)cmd.ExecuteScalar();
-                }
+                    using (var cmd = docSession.Connection.CreateCommand())
+                    {
+                        var dinnerTableName = documentStore.Schema.MappingFor(typeof(Dinner)).Table.QualifiedName;
+                        cmd.CommandText = $"SELECT COUNT(*) FROM {dinnerTableName}";
+                        docCount = (long) cmd.ExecuteScalar();
+                    }
 
-                using(var cmd = docSession.Connection.CreateCommand())
-                {
-                    var dinnerPartyDbName = docSession.Connection.Database;
-                    cmd.CommandText = $"SELECT pg_database_size('{dinnerPartyDbName}')";
-                    dbSize = (long)cmd.ExecuteScalar();
+                    using (var cmd = docSession.Connection.CreateCommand())
+                    {
+                        var dinnerPartyDbName = docSession.Connection.Database;
+                        cmd.CommandText = $"SELECT pg_database_size('{dinnerPartyDbName}')";
+                        dbSize = (long) cmd.ExecuteScalar();
 
-                    configInfo.LastTruncateDate = DateTime.Now;
-                    docSession.SaveChanges();
-                }
+                        configInfo.LastTruncateDate = DateTime.Now;
+                        docSession.SaveChanges();
+                    }
 
-                //If database size >15mb or 1000 documents delete documents older than a week
-                if(docCount > 1000 || dbSize > 15000000) //its actually 14.3mb but goood enough
-                {
-                    docSession.DeleteWhere<Dinner>(dp => dp.LastModified < DateTime.Now.AddDays(-7));
+                    //If database size >15mb or 1000 documents delete documents older than a week
+                    if (docCount > 1000 || dbSize > 15000000) //its actually 14.3mb but goood enough
+                    {
+                        docSession.DeleteWhere<Dinner>(dp => dp.LastModified < DateTime.Now.AddDays(-7));
+                    }
                 }
             }
             catch(Exception ex)

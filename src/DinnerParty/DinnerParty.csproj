@@ -221,6 +221,7 @@
     <Content Include="Views\Dinners\Edit.cshtml" />
     <Content Include="Views\Dinners\My.cshtml" />
     <Content Include="Views\Account\Error.cshtml" />
+    <Content Include="Views\GraphQL\GraphiQL.cshtml" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BindExtensions.cs" />
@@ -251,6 +252,7 @@
     <Compile Include="Modules\AccountModule.cs" />
     <Compile Include="Modules\BaseModule.cs" />
     <Compile Include="Modules\DinnerModule.cs" />
+    <Compile Include="Modules\GraphQLModule.cs" />
     <Compile Include="Modules\HomeModule.cs" />
     <Compile Include="Modules\RSVPModule.cs" />
     <Compile Include="Modules\SearchModule.cs" />

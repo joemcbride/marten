@@ -1,0 +1,21 @@
+﻿@using Nancy.ViewEngines.Razor
+@inherits NancyRazorViewBase<object>
+
+@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>GraphiQL</title>
+    <link href="@Url.Content("~/graphiql.css")" rel="stylesheet" type="text/css" media="screen" />
+</head>
+<body>
+    <div id="react-app">
+    </div>
+    <script src="@Url.Content("~/graphiql.js")" type="text/javascript"></script>
+</body>
+</html>

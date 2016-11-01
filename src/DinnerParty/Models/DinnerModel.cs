@@ -61,6 +61,8 @@ namespace DinnerParty.Models
 
         public virtual ICollection<RSVP> RSVPs { get; set; }
 
+        public int RSVPCount => RSVPs?.Count ?? 0;
+
         public bool IsHostedBy(string userName)
         {
             return String.Equals(HostedById ?? HostedBy, userName, StringComparison.Ordinal);

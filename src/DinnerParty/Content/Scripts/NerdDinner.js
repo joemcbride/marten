@@ -110,7 +110,28 @@ NerdDinner.FindDinnersGivenLocation = function (where) {
 
 
 NerdDinner.FindMostPopularDinners = function (limit) {
-    $.post("/Search/GetMostPopularDinners", { "limit": limit }, NerdDinner._renderDinners, "json");
+    //    $.post("/Search/GetMostPopularDinners", { "limit": limit }, NerdDinner._renderDinners, "json");
+    var query =
+    'query dinnerQuery($limit: Int) {' +
+        'popularDinners(limit: $limit) {' +
+            'id ' +
+            'url ' +
+            'title ' +
+            'description ' +
+            'eventDate ' +
+            'latitude ' +
+            'longitude ' +
+            'rsvpCount ' +
+    '}}';
+
+    $.ajax({
+        type: 'POST',
+        url: '/graphql',
+        data: JSON.stringify({ query: query, variables: { limit: limit }}),
+        success: NerdDinner._renderDinners,
+        contentType: 'application/json',
+        dataType: 'json'
+    });
 }
 
 NerdDinner._callbackUpdateMapDinners = function (layer, resultsArray, places, hasMore, VEErrorMessage) {
@@ -126,11 +147,13 @@ NerdDinner._callbackUpdateMapDinners = function (layer, resultsArray, places, ha
 NerdDinner._renderDinners = function (dinners) {
     $("#dinnerList").empty();
 
+    // console.log('result', result);
+
     NerdDinner.ClearMap();
 
-    $.each(dinners, function (i, dinner) {
+    $.each(dinners.data.popularDinners, function (i, dinner) {
 
-        var LL = new VELatLong(dinner.Latitude, dinner.Longitude, 0, null);
+        var LL = new VELatLong(dinner.latitude, dinner.longitude, 0, null);
 
         // Add Pin to Map
         NerdDinner.LoadPin(LL, _getDinnerLinkHTML(dinner), _getDinnerDescriptionHTML(dinner), false);
@@ -141,7 +164,7 @@ NerdDinner._renderDinners = function (dinners) {
                         .append(_getDinnerLinkHTML(dinner))
                         .append($('<br/>'))
                         .append(_getDinnerDate(dinner, "mmm d"))
-                        .append(" with " + _getRSVPMessage(dinner.RSVPCount)));
+                        .append(" with " + _getRSVPMessage(dinner.rsvpCount)));
     });
 
     // Adjust zoom to display all the pins we just added.
@@ -158,19 +181,20 @@ NerdDinner._renderDinners = function (dinners) {
     });
 
     function _getDinnerDate(dinner, formatStr) {
-        return '<strong>' + _dateDeserialize(dinner.EventDate).format(formatStr) + '</strong>';
+        return '<strong>' + _dateDeserialize(dinner.eventDate).format(formatStr) + '</strong>';
     }
 
     function _getDinnerLinkHTML(dinner) {
-        return '<a href="' + dinner.Url + '">' + dinner.Title + '</a>';
+        return '<a href="' + dinner.url + '">' + dinner.title + '</a>';
     }
 
     function _getDinnerDescriptionHTML(dinner) {
-        return '<p>' + _getDinnerDate(dinner, "mmmm d, yyyy") + '</p><p>' + dinner.Description + '</p>' + _getRSVPMessage(dinner.RSVPCount);
+        return '<p>' + _getDinnerDate(dinner, "mmmm d, yyyy") + '</p><p>' + dinner.description + '</p>' + _getRSVPMessage(dinner.rsvpCount);
     }
 
     function _dateDeserialize(dateStr) {
-        return eval('new' + dateStr.replace(/\//g, ' '));
+        //        return eval('new' + dateStr.replace(/\//g, ' '));
+        return new Date(dateStr);
     }
 
 

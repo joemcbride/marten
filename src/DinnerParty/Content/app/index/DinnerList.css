@@ -1,0 +1,8 @@
+.dinner-list {
+  margin: 0 0 0 30px;
+}
+
+.dinner-list li {
+  padding: 7px 0;
+  border-top: 1px dotted #ccc;
+}

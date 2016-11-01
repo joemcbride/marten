@@ -1,11 +1,14 @@
 @using Nancy.ViewEngines.Razor
 @inherits NancyRazorViewBase<dynamic>
-              
+
 @{
     Layout = "_Layout.cshtml";
 }
+@section HeadArea {
+  <link rel="stylesheet" type="text/css" href="@Url.Content("~/create.css")"/>
+}
 
 <h2>Host a Dinner</h2>
-
-@Html.Partial("_DinnerForm", Model)
-
+<div id="react-app"></div>
+<script src="http://dev.virtualearth.net/mapcontrol/mapcontrol.ashx?v=6.3" type="text/javascript"></script>
+<script src="@Url.Content("~/create.js")" type="text/javascript"></script>

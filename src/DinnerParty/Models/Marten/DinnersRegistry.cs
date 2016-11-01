@@ -19,6 +19,8 @@ namespace DinnerParty.Models.Marten
 
             // Make the LastModified column searchable
             For<Dinner>().Duplicate(d => d.LastModified);
+
+            For<Dinner>().Duplicate(x => x.RSVPCount);
         }
     }
 }
