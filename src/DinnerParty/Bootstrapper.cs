@@ -1,18 +1,18 @@
-﻿using Nancy;
-using Nancy.Authentication.Forms;
-using Nancy.TinyIoc;
-using Nancy.Diagnostics;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
 using DinnerParty.Models;
 using DinnerParty.Models.Marten;
-using DinnerParty.Modules;
+using DinnerParty.Models.Schema;
 using GraphQL;
 using GraphQL.Http;
 using GraphQL.Types;
 using Marten;
+using Nancy;
+using Nancy.Authentication.Forms;
+using Nancy.Diagnostics;
 using Nancy.Session;
+using Nancy.TinyIoc;
 using NLog;
 
 namespace DinnerParty
@@ -64,8 +64,6 @@ namespace DinnerParty
                 var schema = new NerdDinnerSchema(type => c.Resolve(type) as IGraphType);
                 return schema;
             });
-            container.Register<Query>();
-            container.Register<DinnerType>();
         }
 
         protected override void RequestStartup(TinyIoCContainer container, Nancy.Bootstrapper.IPipelines pipelines, NancyContext context)
