@@ -1,7 +1,9 @@
 import React from 'react';
 import { Field, reduxForm } from 'redux-form';
 
-function DinnerForm({ handleSubmit }) {
+function DinnerForm({ error, handleSubmit, submitFailed }) {
+  console.log('submitFailed', submitFailed, error)
+  const errorDisplay = error ? <div>An error occurred</div> : null
   return (
     <form onSubmit={handleSubmit}>
       <div>
@@ -21,8 +23,8 @@ function DinnerForm({ handleSubmit }) {
         <Field name="hostName" component="input" type="text"/>
       </div>
       <div>
-        <label htmlFor="contactInfo">Contact Info</label>
-        <Field name="contactInfo" component="input" type="text"/>
+        <label htmlFor="contactPhone">Contact Phone</label>
+        <Field name="contactPhone" component="input" type="text"/>
       </div>
       <div>
         <label htmlFor="address">Address, City, State, Zip</label>
@@ -33,6 +35,7 @@ function DinnerForm({ handleSubmit }) {
         <Field name="country" component="input" type="text"/>
       </div>
       <button type="submit">Submit</button>
+      {errorDisplay}
     </form>
   );
 }

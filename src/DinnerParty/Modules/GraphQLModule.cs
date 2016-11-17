@@ -1,13 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using DinnerParty.Models.Schema;
 using GraphQL;
 using GraphQL.Http;
 using GraphQL.Instrumentation;
 using GraphQL.Types;
+using GraphQL.Validation;
 using Marten;
+using Marten.Services.BatchQuerying;
 using Nancy;
 using Nancy.Extensions;
+using Nancy.Validation;
 using Newtonsoft.Json;
 
 namespace DinnerParty.Modules
@@ -31,13 +35,22 @@ namespace DinnerParty.Modules
 
                 var batch = session.CreateBatchQuery();
 
+                var userContext = new GraphQLUserContext
+                {
+                    User = Context.CurrentUser as UserIdentity,
+                    Batch = batch,
+                    Validate = model => this.Validate(model)
+                };
+
                 var result = await executer.ExecuteAsync(_ =>
                 {
                     _.Query = options.Query;
                     _.Schema = schema;
                     _.Inputs = inputs;
-                    _.UserContext = batch;
+                    _.UserContext = userContext;
+                    _.FieldMiddleware.Use<InstrumentFieldsMiddleware>();
                     _.Listeners.Add(new ExecuteBatchListener());
+                    _.ValidationRules = new[] {new RequiresAuthValidationRule()}.Concat(DocumentValidator.CoreRules());
                 });
 
                 LogStats(session, schema, result, start);
@@ -82,5 +95,13 @@ namespace DinnerParty.Modules
         public string Query { get; set; }
         public string OperationName { get; set; }
         public Dictionary<string, object> Variables { get; set; }
+    }
+
+    public class GraphQLUserContext
+    {
+        public UserIdentity User { get; set; }
+        public IBatchedQuery Batch { get; set; }
+
+        public Func<object, ModelValidationResult> Validate { get; set; }
     }
 }

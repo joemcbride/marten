@@ -2,6 +2,7 @@ import React, { PropTypes } from 'react'
 import { connect } from 'react-redux'
 import { graphql, compose } from 'react-apollo'
 import gql from 'graphql-tag'
+import moment from 'moment'
 
 import App from '../app'
 import BingMap from '../BingMap'
@@ -30,15 +31,17 @@ const createDinner = gql`
   mutation newDinner(
     $title: String!,
     $description: String!,
-    $date: Date!,
+    $eventDate: Date!,
     $address: String!,
+    $hostName: String!,
     $contactPhone: String!) {
     createDinner(dinner:
       {
         title: $title
         description: $description
-        eventDate: $date
+        eventDate: $eventDate
         address: $address
+        hostName: $hostName
         contactPhone: $contactPhone
       }) {
       id
@@ -49,9 +52,9 @@ const createDinner = gql`
   `
 
 const submitAndMutate = (mutate) => ({
-  submit: ({ values }) =>
+  submit: (values) =>
     mutate({
-      variables: { values },
+      variables: { ...values, eventDate: moment(values.eventDate).toISOString() },
     }).catch(e => {
       console.error(e)
     })

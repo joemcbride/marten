@@ -1,15 +1,17 @@
 ﻿using System.Threading;
 using System.Threading.Tasks;
+using DinnerParty.Modules;
 using GraphQL.Execution;
-using Marten.Services.BatchQuerying;
 
 namespace DinnerParty.Models.Schema
 {
-    public class ExecuteBatchListener : DocumentExecutionListenerBase<IBatchedQuery>
+    public class ExecuteBatchListener : DocumentExecutionListenerBase<GraphQLUserContext>
     {
-        public override async Task BeforeExecutionAwaitedAsync(IBatchedQuery userContext, CancellationToken token)
+        public override async Task BeforeExecutionAwaitedAsync(
+            GraphQLUserContext userContext,
+            CancellationToken token)
         {
-            await userContext.Execute(token);
+            await userContext.Batch.Execute(token);
         }
     }
 }

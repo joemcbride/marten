@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Web.Security;
 using Nancy;
 using Nancy.Responses.Negotiation;
 using Nancy.Security;

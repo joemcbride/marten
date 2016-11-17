@@ -1,9 +1,9 @@
 ﻿using System.Linq;
 using DinnerParty.Models.Marten;
+using DinnerParty.Modules;
 using GraphQL;
 using GraphQL.Types;
 using Marten;
-using Marten.Services.BatchQuerying;
 
 namespace DinnerParty.Models.Schema
 {
@@ -16,9 +16,10 @@ namespace DinnerParty.Models.Schema
                 arguments: new QueryArguments(new QueryArgument<NonNullGraphType<IntGraphType>> { Name = "id" }),
                 resolve: context =>
                 {
-                    var batch = context.UserContext.As<IBatchedQuery>();
+                    var userContext = context.UserContext.As<GraphQLUserContext>();
                     var id = context.GetArgument<int>("id");
-                    return batch.Load<Dinner>(id);
+
+                    return userContext.Batch.Load<Dinner>(id);
                 });
 
             Field<ListGraphType<DinnerType>>(
@@ -26,10 +27,10 @@ namespace DinnerParty.Models.Schema
                 arguments: new QueryArguments(new QueryArgument<IntGraphType> { Name = "limit", DefaultValue = 40 }),
                 resolve: context =>
                 {
-                    var batch = context.UserContext.As<IBatchedQuery>();
+                    var userContext = context.UserContext.As<GraphQLUserContext>();
                     var limit = context.GetArgument<int>("limit");
 
-                    return batch.Query(new FindPopularDinners { Limit = limit });
+                    return userContext.Batch.Query(new FindPopularDinners { Limit = limit });
                 });
 
             Field<ListGraphType<OperationPerfType>>(

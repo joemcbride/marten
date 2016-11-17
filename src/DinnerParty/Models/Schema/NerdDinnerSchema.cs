@@ -12,4 +12,13 @@ namespace DinnerParty.Models.Schema
             Mutation = (IObjectGraphType)resolve(typeof(Mutation));
         }
     }
+
+    public class NerdDinnerAuthenticatedSchema : GraphQL.Types.Schema
+    {
+        public NerdDinnerAuthenticatedSchema(Func<Type, IGraphType> resolve)
+            : base(resolve)
+        {
+            Mutation = (IObjectGraphType)resolve(typeof(Mutation));
+        }
+    }
 }

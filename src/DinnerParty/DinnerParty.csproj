@@ -256,6 +256,7 @@
     <Compile Include="Models\Schema\Mutation.cs" />
     <Compile Include="Models\Schema\NerdDinnerSchema.cs" />
     <Compile Include="Models\Schema\Query.cs" />
+    <Compile Include="Models\Schema\RequiresAuthValidationRule.cs" />
     <Compile Include="Models\Schema\Stats.cs" />
     <Compile Include="Models\UserModel.cs" />
     <Compile Include="Modules\AccountModule.cs" />

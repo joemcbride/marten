@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using DinnerParty.Modules;
+using GraphQL;
 using GraphQL.Types;
 using Marten;
 
@@ -14,23 +16,30 @@ namespace DinnerParty.Models.Schema
                 arguments: new QueryArguments(new QueryArgument<DinnerInputType> { Name = "dinner" }),
                 resolve: context =>
                 {
+                    var userContext = context.UserContext.As<GraphQLUserContext>();
+
                     var dinner = context.GetArgument<Dinner>("dinner");
+                    dinner.HostedBy = context.GetArgument<string>("hostName");
 
-                    if (dinner == null)
+                    var validationResult = userContext.Validate(dinner);
+
+                    if (!validationResult.IsValid)
                     {
-                        dinner = new Dinner();
-                        dinner.Title = "A dinner";
-                        dinner.Description = "A short description";
-                        dinner.Address = "123 street";
-                        dinner.ContactPhone = "888-555-5555";
-                        dinner.EventDate = DateTime.UtcNow;
-                        dinner.RSVPs = new List<RSVP>();
+                        throw new Exception("Dinner input not valid");
                     }
 
-                    if (dinner.RSVPs == null)
+                    dinner.HostedById = userContext.User.UserName;
+                    dinner.HostedBy = string.IsNullOrWhiteSpace(dinner.HostedBy)
+                        ? userContext.User.FriendlyName
+                        : dinner.HostedBy;
+
+                    var rsvp = new RSVP
                     {
-                        dinner.RSVPs = new List<RSVP>();
-                    }
+                        AttendeeNameId = userContext.User.UserName,
+                        AttendeeName = userContext.User.FriendlyName
+                    };
+
+                    dinner.RSVPs = new List<RSVP> { rsvp };
 
                     session.Store(dinner);
                     session.SaveChanges();
