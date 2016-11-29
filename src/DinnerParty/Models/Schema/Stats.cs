@@ -38,7 +38,7 @@ namespace DinnerParty.Models.Schema
         public OperationFieldStatsType()
         {
             Field(x => x.Name);
-            Field(x => x.ReturnType);
+            Field(x => x.ReturnType, nullable:true);
             Field(x => x.Latency);
         }
     }

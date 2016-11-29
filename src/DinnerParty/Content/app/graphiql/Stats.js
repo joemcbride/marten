@@ -121,7 +121,7 @@ export default compose(
     options: { },
     props: ({ data: { loading, stats } }) => ({
       loading,
-      stats,
+      stats
     })
   }),
   connect(
