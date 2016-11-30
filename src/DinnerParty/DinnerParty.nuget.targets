@@ -3,7 +3,7 @@
   <PropertyGroup Condition="'$(NuGetPackageRoot)' == ''">
     <NuGetPackageRoot>$(UserProfile)\.nuget\packages\</NuGetPackageRoot>
   </PropertyGroup>
-  <ImportGroup>
-    <Import Project="$(NuGetPackageRoot)\Nancy.Viewengines.Razor\1.4.3\build\Nancy.ViewEngines.Razor.targets" Condition="Exists('$(NuGetPackageRoot)\Nancy.Viewengines.Razor\1.4.3\build\Nancy.ViewEngines.Razor.targets')" />
+  <ImportGroup Condition=" '$(ExcludeRestorePackageImports)' != 'true' ">
+    <Import Project="$(NuGetPackageRoot)nancy.viewengines.razor\1.4.3\build\Nancy.ViewEngines.Razor.targets" Condition="Exists('$(NuGetPackageRoot)nancy.viewengines.razor\1.4.3\build\Nancy.ViewEngines.Razor.targets')" />
   </ImportGroup>
 </Project>

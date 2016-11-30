@@ -2,7 +2,9 @@ import React from 'react'
 import { connect } from 'react-redux'
 import { graphql, compose } from 'react-apollo'
 import gql from 'graphql-tag'
+import moment from 'moment'
 import { setSelectedQuery } from './actions'
+import './stats.css'
 
 function Field({field}) {
   return (
@@ -45,9 +47,11 @@ function Query({query}) {
     return <div/>
   }
 
+  const start = moment(query.start).format('MMMM Do YYYY, h:mm:ss.SS a')
+
   return (
     <div className="pull-left query">
-      <h2>{query.name} <span>{query.duration}ms</span></h2>
+      <h2>{query.name} <span>{query.duration}ms</span> <span>{start}</span></h2>
       <TypeList types={query.types}/>
     </div>
   )

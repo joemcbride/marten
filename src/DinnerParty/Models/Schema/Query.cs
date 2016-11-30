@@ -35,10 +35,14 @@ namespace DinnerParty.Models.Schema
 
             Field<ListGraphType<OperationPerfType>>(
                 "stats",
+                arguments: new QueryArguments(new QueryArgument<IntGraphType> { Name = "limit", DefaultValue = 20 }),
                 resolve: context =>
                 {
+                    var limit = context.GetArgument<int>("limit");
+
                     var logs = session
                         .Query<OperationPerfLog>()
+                        .Take(limit)
                         .OrderByDescending(x => x.Report.Start)
                         .ToList()
                         .Select(x => x.Report)
